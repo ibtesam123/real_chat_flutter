@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_socket_io/flutter_socket_io.dart';
 import 'package:flutter_socket_io/socket_io_manager.dart';
@@ -29,8 +31,10 @@ class _ChatPageState extends State<ChatPage> {
     //Call init before doing anything with socket
     socketIO.init();
     //Subscribe to an event to listen to
-    socketIO.subscribe('receive_message', (data) {
-      this.setState(() => messages.add(data.toString()));
+    socketIO.subscribe('receive_message', (jsonData) {
+      //Convert the JSON data received into a Map
+      Map<String, dynamic> data = json.decode(jsonData);
+      this.setState(() => messages.add(data['message']));
       scrollController.animateTo(
         scrollController.position.maxScrollExtent,
         duration: Duration(milliseconds: 600),
@@ -94,8 +98,9 @@ class _ChatPageState extends State<ChatPage> {
       onPressed: () {
         //Check if the textfield has text or not
         if (textController.text.isNotEmpty) {
-          //Send the message to send_message event
-          socketIO.sendMessage('send_message', textController.text);
+          //Send the message as JSON data to send_message event
+          socketIO.sendMessage(
+              'send_message', json.encode({'message': textController.text}));
           //Add the message to the list
           this.setState(() => messages.add(textController.text));
           textController.text = '';
